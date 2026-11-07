@@ -7,6 +7,9 @@ dependencies = []
 
 [tool.uv]
 package = false
+# Copy instead of hardlinking from the uv cache. Hardlinks fail inside
+# OneDrive-synced folders on Windows (os error 396).
+link-mode = "copy"
 
 [tool.uv.workspace]
 members = ["patterns/*"]
