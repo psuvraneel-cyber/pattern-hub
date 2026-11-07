@@ -42,3 +42,14 @@ def test_recursion_limit_must_be_at_least_2x_max_steps_plus_2():
 def test_without_budget_recursion_limit_raises():
     with pytest.raises(GraphRecursionError):
         build_graph(stubborn_code_worker).invoke(init_state("q", 10_000), {"recursion_limit": 25})
+
+
+def test_default_recursion_limit_lets_a_loop_run_10007_steps():
+    # Backs the carousel hook. LangGraph 1.2 defaults recursion_limit to 10,007
+    # (older versions used 25). With no limit set, a never-ending loop runs
+    # 10,007 supersteps before GraphRecursionError.
+    steps = 0
+    with pytest.raises(GraphRecursionError):
+        for _ in build_graph(stubborn_code_worker).stream(init_state("q", 10**9), stream_mode="updates"):
+            steps += 1
+    assert steps == 10_007

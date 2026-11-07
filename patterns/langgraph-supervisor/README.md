@@ -39,6 +39,10 @@ uv run --group dev pytest
 
 The tests check every claim above against real LangGraph.
 
+## Why set recursion_limit yourself
+
+In LangGraph 1.2 the default `recursion_limit` is **10,007** (older versions used 25). With no limit set, a loop that never finishes runs 10,007 supersteps, about 5,000 worker calls, before `GraphRecursionError`. `test_default_recursion_limit_lets_a_loop_run_10007_steps` checks this.
+
 ## The budget math
 
 - Each hop costs 2 supersteps (supervisor + worker), plus 1 final supervisor step to exit.
