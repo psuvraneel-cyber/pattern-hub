@@ -59,8 +59,40 @@ In LangGraph 1.2 the default `recursion_limit` is **10,007** (older versions use
 | `graph.py` | Wires the graph |
 | `main.py` | Runs the three cases above |
 
-## Using real LLMs
+## Using a real model
 
-Replace the functions in `workers.py` (and `route()` if you want an LLM router) with LLM calls. The supervisor and the budget don't change.
+Swap a mock worker for one that calls a model. The supervisor and the budget don't change. Here `research` calls Claude through the official Anthropic SDK:
+
+```bash
+uv add anthropic
+```
+
+```python
+import anthropic
+
+from state import AgentState
+
+client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
+
+
+def research(state: AgentState) -> dict:
+    response = client.beta.messages.create(
+        model="claude-opus-5-5",
+        max_tokens=16000,
+        # If the model declines, retry on a fallback model in the same call.
+        betas=["server-side-fallback-2026-07-01"],
+        fallbacks="default",
+        messages=[{"role": "user", "content": "\n".join(state["messages"])}],
+    )
+    if response.stop_reason == "refusal":
+        return {"messages": ["research: declined"]}
+    text = next((b.text for b in response.content if b.type == "text"), "")
+    return {"messages": [f"research: {text}"]}
+```
+
+Two things to keep:
+
+- **Keep the message prefixes.** `route()` reads them: a worker message starting with `research:` sends work to the coder, and `code: done` ends the run. Tell a real coder model to reply `code: done` when it's finished.
+- **Each worker step is now a paid API call**, which is exactly why the budget matters. With `max_steps=6` a run makes at most 6 worker calls.
 
 Tested with LangGraph 1.2.20 on Python 3.14.
