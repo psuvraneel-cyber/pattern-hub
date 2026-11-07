@@ -1,0 +1,16 @@
+[project]
+name = "langgraph-supervisor-pattern"
+version = "0.1.0"
+description = "A LangGraph supervisor that stops on a step budget instead of crashing at recursion_limit."
+requires-python = ">=3.10"
+dependencies = ["langgraph>=0.2"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
